@@ -27,8 +27,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+const dbHost = process.env.DB_HOST || 'localhost';
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
+  host: dbHost,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   port: parseInt(process.env.DB_PORT || '3306', 10),
@@ -37,19 +38,26 @@ const dbConfig = {
   queueLimit: 0
 };
 
+// Enable SSL automatically for Aiven or cloud MySQL databases
+if (dbHost !== 'localhost' && dbHost !== '127.0.0.1') {
+  dbConfig.ssl = { rejectUnauthorized: false };
+}
+
 let pool = null;
 
 async function initializeDatabase() {
   try {
-    // Connect to MySQL server without database specified first to create database if missing
+    const dbName = process.env.DB_NAME || 'grow_up_classes_db';
+
+    // Connect to root/default database first to ensure target database exists
     const rootConn = await mysql.createConnection({
       host: dbConfig.host,
       user: dbConfig.user,
       password: dbConfig.password,
-      port: dbConfig.port
+      port: dbConfig.port,
+      ssl: dbConfig.ssl
     });
 
-    const dbName = process.env.DB_NAME || 'grow_up_classes_db';
     await rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
     await rootConn.end();
 
@@ -542,6 +550,6 @@ app.post('/api/db/gallery', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`============================================================`);
   console.log(`[Grow Up Classes MySQL Database Server] Running on http://localhost:${PORT}`);
-  console.log(`Connected to MySQL: ${dbConfig.host}:${dbConfig.port} (${process.env.DB_NAME || 'grow_up_classes_db'})`);
+  console.log(`Connected to MySQL: ${dbConfig.host}:${dbConfig.port} (${process.env.DB_NAME || 'defaultdb'})`);
   console.log(`============================================================`);
 });

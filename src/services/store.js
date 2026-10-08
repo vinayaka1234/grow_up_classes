@@ -37,7 +37,10 @@ const setItem = (key, value) => {
   } catch (e) {}
 };
 
-const MYSQL_SERVER_URL = 'http://localhost:5000/api/db';
+// Use Render backend URL on production, or localhost in dev environment
+const MYSQL_SERVER_URL = (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')
+  ? 'https://grow-up-classes.onrender.com/api/db'
+  : 'http://localhost:5000/api/db';
 
 export const store = {
   init() {
@@ -50,13 +53,12 @@ export const store = {
     if (!localStorage.getItem(KEYS.TESTIMONIALS)) setItem(KEYS.TESTIMONIALS, initialTestimonials);
     if (!localStorage.getItem(KEYS.ENQUIRIES)) setItem(KEYS.ENQUIRIES, initialEnquiries);
 
-    // Initial background fetch from MySQL Workbench Database
+    // Initial background fetch from MySQL Database
     this.fetchLiveDataFromMySQL();
   },
 
   async fetchLiveDataFromMySQL() {
     try {
-      // 1. Enquiries
       const resEnq = await fetch(`${MYSQL_SERVER_URL}/enquiries`);
       const dataEnq = await resEnq.json();
       if (dataEnq.success && dataEnq.data) {
