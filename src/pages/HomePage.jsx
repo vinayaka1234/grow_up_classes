@@ -7,7 +7,7 @@ import {
   Sparkles, ShieldCheck, HeartHandshake, Zap, Target, HelpCircle, PhoneCall
 } from 'lucide-react';
 
-export default function HomePage({ onOpenEnquiry, onNavigate, onSelectCourse, onSelectBranch }) {
+export default function HomePage({ onOpenEnquiry, onNavigate, onSelectCourse, onSelectBranch, session }) {
   const [courses, setCourses] = useState([]);
   const [branches, setBranches] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -15,8 +15,10 @@ export default function HomePage({ onOpenEnquiry, onNavigate, onSelectCourse, on
   const [achievements, setAchievements] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [gallery, setGallery] = useState([]);
+  const [customerSession, setCustomerSession] = useState(null);
 
   useEffect(() => {
+    setCustomerSession(session || store.getCustomerSession());
     setCourses(store.getCourses().filter(c => c.status === 'ACTIVE'));
     setBranches(store.getBranches().filter(b => b.status === 'ACTIVE'));
     setTeachers(store.getTeachers().filter(t => t.status === 'ACTIVE'));
@@ -24,7 +26,7 @@ export default function HomePage({ onOpenEnquiry, onNavigate, onSelectCourse, on
     setAchievements(store.getAchievements());
     setTestimonials(store.getTestimonials());
     setGallery(store.getGallery());
-  }, []);
+  }, [session]);
 
   const whyChooseUs = [
     {
@@ -59,6 +61,65 @@ export default function HomePage({ onOpenEnquiry, onNavigate, onSelectCourse, on
 
   return (
     <div style={{ background: '#F8FAFC' }}>
+
+      {/* Personalized Welcome Banner with Quote */}
+      {customerSession && (
+        <div style={{
+          background: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #2563EB 100%)',
+          color: '#FFFFFF',
+          padding: '1.25rem 1.5rem',
+          borderBottom: '2px solid #3B82F6',
+          boxShadow: '0 8px 25px rgba(37, 99, 235, 0.25)'
+        }}>
+          <div className="container-custom" style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                border: '1px solid rgba(255, 255, 255, 0.3)'
+              }}>
+                👋
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.3rem', color: '#FFFFFF', fontWeight: '800', margin: 0 }}>
+                  Welcome, <span style={{ color: '#60A5FA' }}>{customerSession.name}</span>!
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#E2E8F0', margin: '0.25rem 0 0 0', fontStyle: 'italic', fontWeight: '500' }}>
+                  "Education is the most powerful weapon which you can use to change the world." — Nelson Mandela
+                </p>
+              </div>
+            </div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'rgba(255, 255, 255, 0.18)',
+              backdropFilter: 'blur(8px)',
+              color: '#FFFFFF',
+              fontSize: '0.8rem',
+              fontWeight: '700',
+              padding: '0.45rem 0.9rem',
+              borderRadius: '9999px',
+              border: '1px solid rgba(255, 255, 255, 0.25)'
+            }}>
+              <Sparkles size={15} color="#FDE047" /> Student Access Granted
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section with Muted Video Background */}
       <HeroVideo onOpenEnquiry={onOpenEnquiry} onNavigate={onNavigate} />
 
@@ -100,10 +161,10 @@ export default function HomePage({ onOpenEnquiry, onNavigate, onSelectCourse, on
                     height: '56px',
                     borderRadius: '16px',
                     background: item.bg,
+                    color: item.color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: item.color,
                     marginBottom: '1.25rem'
                   }}>
                     <Icon size={28} />
@@ -121,218 +182,231 @@ export default function HomePage({ onOpenEnquiry, onNavigate, onSelectCourse, on
         </div>
       </section>
 
-      {/* TOP COURSES SHOWCASE */}
+      {/* FEATURED COURSES SECTION */}
       <section style={{ padding: '4rem 0', background: '#F8FAFC' }}>
         <div className="container-custom">
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <span className="badge-green" style={{ marginBottom: '0.5rem' }}>
+              <span className="badge-blue" style={{ marginBottom: '0.5rem' }}>
                 Academic Programs
               </span>
               <h2 style={{ fontSize: '2.2rem', color: '#0F172A', fontWeight: '800' }}>
-                Top Offered Courses
+                Courses Crafted for Ranks
               </h2>
-              <p style={{ color: '#64748B', fontSize: '0.95rem' }}>
-                Tailored for State Board, CBSE, ICSE, KCET, JEE Main & NEET Medical aspirants.
-              </p>
             </div>
             <button
               onClick={() => onNavigate('courses')}
-              className="btn-secondary"
-              style={{ fontSize: '0.9rem' }}
+              className="btn-outline"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
-              View All Courses <ArrowRight size={16} />
+              View All Courses <ArrowRight size={18} />
             </button>
           </div>
 
-          <div className="grid-responsive-3">
-            {courses.slice(0, 3).map((course) => (
-              <div
-                key={course.id}
-                className="glass-card"
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '20px',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                <div style={{ position: 'relative', height: '180px', overflow: 'hidden' }}>
-                  <img
-                    src={course.image}
-                    alt={course.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    zIndex: 2
-                  }}>
-                    <span className="badge-gold">{course.badge}</span>
-                  </div>
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+            {courses.slice(0, 3).map((course) => {
+              const subjArr = typeof course.subjects === 'string'
+                ? (course.subjects.startsWith('[') ? JSON.parse(course.subjects) : course.subjects.split(','))
+                : (course.subjects || []);
 
-                <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#2563EB', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                      {course.level}
+              return (
+                <div
+                  key={course.id}
+                  className="glass-card"
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: '24px',
+                    overflow: 'hidden',
+                    border: '1px solid #E2E8F0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)'
+                  }}
+                >
+                  {course.image_url && (
+                    <div style={{ height: '180px', overflow: 'hidden', position: 'relative' }}>
+                      <img
+                        src={course.image_url}
+                        alt={course.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      {course.badge && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '1rem',
+                          right: '1rem',
+                          background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
+                          color: '#FFFFFF',
+                          fontSize: '0.75rem',
+                          fontWeight: '800',
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '9999px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                        }}>
+                          {course.badge}
+                        </span>
+                      )}
                     </div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.75rem' }}>
+                  )}
+
+                  <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <span className="badge-blue" style={{ fontSize: '0.75rem' }}>{course.category}</span>
+                      <span style={{ background: '#F1F5F9', color: '#475569', fontSize: '0.75rem', fontWeight: '700', padding: '0.25rem 0.6rem', borderRadius: '9999px' }}>
+                        {course.level}
+                      </span>
+                    </div>
+
+                    <h3 style={{ fontSize: '1.3rem', color: '#0F172A', fontWeight: '800', marginBottom: '0.5rem' }}>
                       {course.title}
                     </h3>
-                    <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '1rem', lineHeight: '1.5' }}>
+                    
+                    <p style={{ color: '#64748B', fontSize: '0.875rem', lineHeight: '1.5', marginBottom: '1.25rem', flex: 1 }}>
                       {course.description}
                     </p>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.25rem' }}>
-                      {course.subjects.slice(0, 3).map((sub, idx) => (
-                        <span key={idx} style={{
-                          background: '#F1F5F9',
-                          color: '#334155',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '6px'
-                        }}>
-                          {sub}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1.25rem' }}>
+                      {subjArr.slice(0, 4).map((s, idx) => (
+                        <span key={idx} style={{ background: '#EFF6FF', color: '#1E40AF', fontSize: '0.75rem', fontWeight: '600', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                          ✓ {typeof s === 'string' ? s.trim() : s}
                         </span>
                       ))}
                     </div>
-                  </div>
 
-                  <button
-                    onClick={() => onSelectCourse(course.id)}
-                    className="btn-primary"
-                    style={{ width: '100%', padding: '0.75rem', fontSize: '0.9rem' }}
-                  >
-                    Enquire for this Course <ArrowRight size={16} />
-                  </button>
+                    <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid #F1F5F9' }}>
+                      <button
+                        onClick={() => onSelectCourse(course.id)}
+                        className="btn-primary"
+                        style={{ flex: 1, padding: '0.65rem', fontSize: '0.875rem' }}
+                      >
+                        Enroll / Enquire
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* BENGALURU BRANCHES PREVIEW */}
+      {/* BENGALURU BRANCHES SECTION */}
       <section style={{ padding: '4rem 0', background: '#FFFFFF' }}>
         <div className="container-custom">
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3rem' }}>
-            <span className="badge-gold" style={{ marginBottom: '0.5rem' }}>
-              Multi-Location Network
+            <span className="badge-blue" style={{ marginBottom: '0.5rem' }}>
+              Our Campuses
             </span>
             <h2 style={{ fontSize: '2.2rem', color: '#0F172A', fontWeight: '800' }}>
-              Our Bengaluru Branches
+              State-of-the-Art Learning Centres
             </h2>
-            <p style={{ color: '#64748B', fontSize: '0.95rem', marginTop: '0.5rem' }}>
-              Conveniently located learning centers across key residential and education hubs in Bengaluru.
+            <p style={{ color: '#64748B', fontSize: '1rem', marginTop: '0.5rem' }}>
+              Located conveniently across Bengaluru with high-tech classrooms, library facilities, and safe security.
             </p>
           </div>
 
-          <div className="grid-responsive-3">
-            {branches.slice(0, 3).map((branch) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+            {branches.map((branch) => (
               <div
                 key={branch.id}
                 className="glass-card"
                 style={{
                   background: '#FFFFFF',
-                  borderRadius: '20px',
-                  padding: '1.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
+                  borderRadius: '24px',
+                  overflow: 'hidden',
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)'
                 }}
               >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2563EB', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                    <MapPin size={16} /> {branch.area}
+                {branch.image_url && (
+                  <div style={{ height: '200px', overflow: 'hidden' }}>
+                    <img
+                      src={branch.image_url}
+                      alt={branch.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                   </div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.5rem' }}>
+                )}
+                <div style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', color: '#0F172A', fontWeight: '800', marginBottom: '0.5rem' }}>
                     {branch.name}
                   </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '1rem', lineHeight: '1.5' }}>
+                  <p style={{ color: '#475569', fontSize: '0.875rem', display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', alignItems: 'flex-start' }}>
+                    <MapPin size={18} style={{ color: '#2563EB', flexShrink: 0, marginTop: '2px' }} />
                     {branch.address}
                   </p>
-                  <div style={{ fontSize: '0.85rem', color: '#0F172A', fontWeight: '600', marginBottom: '1.25rem' }}>
-                    📞 {branch.phone}
-                  </div>
-                </div>
+                  <p style={{ color: '#475569', fontSize: '0.875rem', display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', alignItems: 'center' }}>
+                    <PhoneCall size={16} style={{ color: '#059669', flexShrink: 0 }} />
+                    <strong>{branch.phone}</strong>
+                  </p>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => onSelectBranch(branch.id)}
-                    className="btn-emerald"
-                    style={{ flex: 1, padding: '0.7rem', fontSize: '0.85rem' }}
-                  >
-                    Enquire Branch
-                  </button>
-                  <a
-                    href={branch.mapLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-secondary"
-                    style={{ padding: '0.7rem 1rem', fontSize: '0.85rem' }}
-                  >
-                    Map
-                  </a>
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button
+                      onClick={() => onSelectBranch(branch.id)}
+                      className="btn-primary"
+                      style={{ flex: 1, padding: '0.65rem', fontSize: '0.85rem' }}
+                    >
+                      Visit Campus / Enquire
+                    </button>
+                    {branch.map_link && (
+                      <a
+                        href={branch.map_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-outline"
+                        style={{ padding: '0.65rem 0.85rem', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                      >
+                        Map
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-
-          <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-            <button onClick={() => onNavigate('branches')} className="btn-secondary" style={{ padding: '0.8rem 1.75rem' }}>
-              Explore All 8 Bengaluru Branches <ArrowRight size={16} />
-            </button>
-          </div>
         </div>
       </section>
 
-      {/* TOPPERS & ACHIEVEMENTS HIGHLIGHT */}
+      {/* TOPPERS & RESULTS BANNER */}
       <section style={{ padding: '4rem 0', background: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)', color: '#FFFFFF' }}>
         <div className="container-custom">
-          <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3rem' }}>
-            <span className="badge-gold" style={{ marginBottom: '0.5rem' }}>
-              Hall of Fame 2025
+          <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 3rem' }}>
+            <span style={{ background: 'rgba(255, 255, 255, 0.15)', color: '#FDE047', fontSize: '0.8rem', fontWeight: '800', padding: '0.35rem 0.85rem', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              Proven Track Record
             </span>
-            <h2 style={{ fontSize: '2.2rem', color: '#FFFFFF', fontWeight: '800' }}>
-              Proven Academic Results & Toppers
+            <h2 style={{ fontSize: '2.5rem', color: '#FFFFFF', fontWeight: '800', marginTop: '0.75rem' }}>
+              Our Shining Stars & Board Toppers
             </h2>
-            <p style={{ color: '#93C5FD', fontSize: '0.95rem', marginTop: '0.5rem' }}>
-              Celebrating our stellar students who secured top ranks in SSLC, CBSE, JEE & NEET.
+            <p style={{ color: '#94A3B8', fontSize: '1rem', marginTop: '0.5rem' }}>
+              Consistency is our strength. Over 98% of Grow Up Classes students score above 90% in Board & Competitive Exams.
             </p>
           </div>
 
-          <div className="grid-responsive-4">
-            {achievements.map((ach) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
+            {achievements.slice(0, 4).map((ach) => (
               <div
                 key={ach.id}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  backdropFilter: 'blur(12px)',
+                  background: 'rgba(255, 255, 255, 0.06)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(12px)',
                   borderRadius: '20px',
-                  padding: '1.5rem',
+                  padding: '1.75rem',
                   textAlign: 'center'
                 }}
               >
-                <div style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '800',
-                  color: '#FBBF24',
-                  marginBottom: '0.25rem'
-                }}>
+                <div style={{ fontSize: '2.2rem', fontWeight: '900', color: '#FDE047', marginBottom: '0.25rem' }}>
                   {ach.statistic}
                 </div>
-                <div style={{ fontSize: '1rem', fontWeight: '700', color: '#FFFFFF', marginBottom: '0.25rem' }}>
+                <h4 style={{ fontSize: '1.1rem', color: '#FFFFFF', fontWeight: '700', marginBottom: '0.25rem' }}>
                   {ach.title}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: '#60A5FA', fontWeight: '600', marginBottom: '0.75rem' }}>
-                  {ach.studentName}
-                </div>
-                <p style={{ fontSize: '0.8rem', color: '#CBD5E1', lineHeight: '1.5' }}>
+                </h4>
+                {ach.student_name && (
+                  <p style={{ color: '#60A5FA', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+                    Student: {ach.student_name}
+                  </p>
+                )}
+                <p style={{ color: '#94A3B8', fontSize: '0.85rem', lineHeight: '1.5' }}>
                   {ach.description}
                 </p>
               </div>
@@ -341,133 +415,39 @@ export default function HomePage({ onOpenEnquiry, onNavigate, onSelectCourse, on
         </div>
       </section>
 
-      {/* MEET OUR FACULTY PREVIEW */}
+      {/* CTA BANNER */}
       <section style={{ padding: '4rem 0', background: '#FFFFFF' }}>
         <div className="container-custom">
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem', gap: '1rem' }}>
-            <div>
-              <span className="badge-blue" style={{ marginBottom: '0.5rem' }}>
-                Master Educators
-              </span>
-              <h2 style={{ fontSize: '2.2rem', color: '#0F172A', fontWeight: '800' }}>
-                Meet Our Lead Teachers
-              </h2>
-              <p style={{ color: '#64748B', fontSize: '0.95rem' }}>
-                Distinguished faculty from IISc, IITs, and leading universities.
-              </p>
-            </div>
-            <button onClick={() => onNavigate('teachers')} className="btn-secondary">
-              View All Faculty <ArrowRight size={16} />
-            </button>
-          </div>
-
-          <div className="grid-responsive-4">
-            {teachers.map((tch) => (
-              <div
-                key={tch.id}
-                className="glass-card"
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '20px',
-                  overflow: 'hidden',
-                  textAlign: 'center',
-                  paddingBottom: '1.25rem'
-                }}
-              >
-                <img
-                  src={tch.image}
-                  alt={tch.name}
-                  style={{ width: '100%', height: '220px', objectFit: 'cover' }}
-                />
-                <div style={{ padding: '1rem 1rem 0' }}>
-                  <span className="badge-gold" style={{ marginBottom: '0.4rem', fontSize: '0.7rem' }}>
-                    {tch.rating}
-                  </span>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.2rem' }}>
-                    {tch.name}
-                  </h3>
-                  <div style={{ fontSize: '0.78rem', color: '#2563EB', fontWeight: '700', marginBottom: '0.4rem' }}>
-                    {tch.qualification}
-                  </div>
-                  <p style={{ fontSize: '0.8rem', color: '#64748B', lineHeight: '1.4' }}>
-                    {tch.subject}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PARENT & STUDENT TESTIMONIALS */}
-      <section style={{ padding: '4rem 0', background: '#F8FAFC' }}>
-        <div className="container-custom">
-          <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 3rem' }}>
-            <span className="badge-green" style={{ marginBottom: '0.5rem' }}>
-              Real Feedback
-            </span>
-            <h2 style={{ fontSize: '2.2rem', color: '#0F172A', fontWeight: '800' }}>
-              What Parents & Students Say
+          <div style={{
+            background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+            borderRadius: '28px',
+            padding: '3.5rem 2rem',
+            textAlign: 'center',
+            color: '#FFFFFF',
+            boxShadow: '0 20px 50px rgba(37, 99, 235, 0.3)'
+          }}>
+            <h2 style={{ fontSize: '2.3rem', fontWeight: '800', marginBottom: '1rem', color: '#FFFFFF' }}>
+              Ready to Accelerate Your Academic Career?
             </h2>
-          </div>
-
-          <div className="grid-responsive-3">
-            {testimonials.map((t) => (
-              <div
-                key={t.id}
-                className="glass-card"
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '20px',
-                  padding: '1.75rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', gap: '0.2rem', marginBottom: '0.75rem', color: '#F59E0B' }}>
-                    {Array.from({ length: t.rating }).map((_, i) => (
-                      <Star key={i} size={18} fill="#F59E0B" color="#F59E0B" />
-                    ))}
-                  </div>
-                  <p style={{ fontSize: '0.9rem', color: '#334155', fontStyle: 'italic', lineHeight: '1.6', marginBottom: '1.25rem' }}>
-                    "{t.comment}"
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderTop: '1px solid #F1F5F9', paddingTop: '1rem' }}>
-                  <img
-                    src={t.image}
-                    alt={t.name}
-                    style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
-                  />
-                  <div>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#0F172A' }}>{t.name}</h4>
-                    <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{t.role}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FINAL HIGH-CONVERSION ENQUIRY CTA BANNER */}
-      <section style={{ padding: '4rem 0', background: 'linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%)', color: '#FFFFFF' }}>
-        <div className="container-custom" style={{ textAlign: 'center', maxWidth: '760px' }}>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '1rem', color: '#FFFFFF' }}>
-            Ready to Accelerate Your Academic Journey?
-          </h2>
-          <p style={{ fontSize: '1.1rem', color: '#DBEAFE', marginBottom: '2rem', lineHeight: '1.6' }}>
-            Join over 12,500+ successful students across Bengaluru. Book a free diagnostic counseling session at your nearest branch today.
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem' }}>
-            <button onClick={() => onOpenEnquiry()} className="btn-emerald" style={{ padding: '1rem 2.25rem', fontSize: '1.1rem' }}>
-              <PhoneCall size={20} /> Enquire Now For Admission
-            </button>
-            <button onClick={() => onNavigate('branches')} className="btn-secondary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
-              Locate Nearest Branch
+            <p style={{ fontSize: '1.1rem', color: '#DBEAFE', maxWidth: '600px', margin: '0 auto 2rem', lineHeight: '1.6' }}>
+              Book a Free Demo Class or Campus Visit today and interact directly with our IITian & IISc Master Faculty.
+            </p>
+            <button
+              onClick={onOpenEnquiry}
+              style={{
+                background: '#FFFFFF',
+                color: '#1E40AF',
+                border: 'none',
+                padding: '1rem 2.2rem',
+                fontSize: '1.1rem',
+                borderRadius: '16px',
+                fontWeight: '800',
+                cursor: 'pointer',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                transition: 'all 0.2s'
+              }}
+            >
+              Book Free Demo Class Now <ArrowRight size={20} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '6px' }} />
             </button>
           </div>
         </div>

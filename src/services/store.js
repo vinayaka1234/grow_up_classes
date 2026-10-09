@@ -88,18 +88,27 @@ export const store = {
     }
   },
 
-  // Customer Session
+  // Customer / Visitor Session (Uses sessionStorage so every new session/device starts fresh)
   getCustomerSession() {
-    return getItem(KEYS.CUSTOMER_SESSION, null);
+    try {
+      const data = sessionStorage.getItem(KEYS.CUSTOMER_SESSION);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      return null;
+    }
   },
   setCustomerSession(sessionData) {
-    setItem(KEYS.CUSTOMER_SESSION, sessionData);
+    try {
+      sessionStorage.setItem(KEYS.CUSTOMER_SESSION, JSON.stringify(sessionData));
+    } catch (e) {}
   },
   clearCustomerSession() {
-    localStorage.removeItem(KEYS.CUSTOMER_SESSION);
+    try {
+      sessionStorage.removeItem(KEYS.CUSTOMER_SESSION);
+    } catch (e) {}
   },
 
-  // REGISTER VISITOR DIRECTLY TO MYSQL WORKBENCH DATABASE
+  // REGISTER VISITOR DIRECTLY TO MYSQL DATABASE
   async registerVisitorCustomer({ name, mobile, email }) {
     const session = {
       name,

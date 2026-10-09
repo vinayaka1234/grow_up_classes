@@ -23,12 +23,14 @@ export default function App() {
 
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [selectedBranchId, setSelectedBranchId] = useState(null);
+  const [currentSession, setCurrentSession] = useState(null);
 
   // Check customer session on initial load
   useEffect(() => {
     store.init();
     const session = store.getCustomerSession();
-    // Mandatory initial visitor access gate
+    setCurrentSession(session);
+    // Mandatory initial visitor access gate if no active session
     if (!session) {
       setIsOTPModalOpen(true);
     }
@@ -55,6 +57,11 @@ export default function App() {
     setSelectedCourseId(null);
     setSelectedBranchId(null);
     setIsEnquiryModalOpen(true);
+  };
+
+  const handleVisitorVerified = (session) => {
+    setCurrentSession(session);
+    setIsOTPModalOpen(false);
   };
 
   // IF ADMIN PANEL IS OPEN -> Render dedicated full standalone Admin Page!
@@ -84,6 +91,7 @@ export default function App() {
             onNavigate={handleNavigate}
             onSelectCourse={handleOpenEnquiryWithCourse}
             onSelectBranch={handleOpenEnquiryWithBranch}
+            session={currentSession}
           />
         )}
 
@@ -132,11 +140,9 @@ export default function App() {
       {/* Mandatory Visitor Access Gate Modal */}
       <OTPModal
         isOpen={isOTPModalOpen}
-        isMandatory={!store.getCustomerSession()}
+        isMandatory={!currentSession}
         onClose={() => setIsOTPModalOpen(false)}
-        onVerified={(session) => {
-          setIsOTPModalOpen(false);
-        }}
+        onVerified={handleVisitorVerified}
       />
 
       {/* Interactive Admission Enquiry Modal */}
