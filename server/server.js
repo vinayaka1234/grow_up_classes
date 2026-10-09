@@ -33,8 +33,7 @@ const DATA_FILE = path.join(__dirname, 'data_store.json');
 function getLocalStore() {
   const defaults = {
     admins: [
-      { id: 'adm-1', name: 'Super Admin', email: 'admin@growupclasses.in', password_hash: 'admin123', role: 'ROLE_SUPER_ADMIN', status: 'ACTIVE', created_at: new Date().toISOString() },
-      { id: 'adm-2', name: 'Vinu Vinayakar', email: 'vinuvinayakars@gmail.com', password_hash: 'admin123', role: 'ROLE_ADMIN', status: 'ACTIVE', created_at: new Date().toISOString() }
+      { id: 'adm-1', name: 'Super Admin', email: 'admin@growupclasses.in', password_hash: 'admin123', role: 'ROLE_SUPER_ADMIN', status: 'ACTIVE', created_at: new Date().toISOString() }
     ],
     customers: [],
     branches: [],
@@ -57,7 +56,11 @@ function getLocalStore() {
   try {
     const raw = fs.readFileSync(DATA_FILE, 'utf8');
     const data = JSON.parse(raw);
-    return { ...defaults, ...data };
+    return {
+      ...defaults,
+      ...data,
+      admins: Array.isArray(data.admins) ? data.admins : defaults.admins
+    };
   } catch (e) {
     return defaults;
   }
@@ -272,19 +275,12 @@ async function initializeDatabase() {
       )
     `);
 
-    // Ensure default Super Admin & Vinu Admin exist in MySQL
+    // Ensure default Super Admin exists in MySQL
     const [adminRows] = await pool.execute('SELECT * FROM admins WHERE id = ? OR email = ?', ['adm-1', 'admin@growupclasses.in']);
     if (adminRows.length === 0) {
       await pool.execute(
         'INSERT INTO admins (id, name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
         ['adm-1', 'Super Admin', 'admin@growupclasses.in', 'admin123', 'ROLE_SUPER_ADMIN']
-      );
-    }
-    const [vinuRows] = await pool.execute('SELECT * FROM admins WHERE email = ?', ['vinuvinayakars@gmail.com']);
-    if (vinuRows.length === 0) {
-      await pool.execute(
-        'INSERT INTO admins (id, name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-        ['adm-2', 'Vinu Vinayakar', 'vinuvinayakars@gmail.com', 'admin123', 'ROLE_ADMIN']
       );
     }
 
@@ -347,17 +343,21 @@ app.post('/api/db/admin/login', async (req, res) => {
     }
 
     if (!adminUser) {
-      // Default fallback check for admin credentials
-      if ((cleanInput === 'admin' || cleanInput === 'admin@growupclasses.in' || cleanInput === 'vinuvinayakars@gmail.com') && (password === 'admin123' || password.length >= 4)) {
-        return res.json({
-          success: true,
-          admin: { id: 'adm-1', name: cleanInput.includes('vinu') ? 'Vinu Admin' : 'Super Admin', email: cleanInput, role: 'ROLE_SUPER_ADMIN' }
-        });
+      // Fallback only for primary Super Admin if present in database
+      if ((cleanInput === 'admin' || cleanInput === 'admin@growupclasses.in') && password === 'admin123') {
+        const storeData = getLocalStore();
+        const mainAdminExists = storeData.admins.some(a => a.id === 'adm-1' || a.email.toLowerCase() === 'admin@growupclasses.in');
+        if (mainAdminExists) {
+          return res.json({
+            success: true,
+            admin: { id: 'adm-1', name: 'Super Admin', email: 'admin@growupclasses.in', role: 'ROLE_SUPER_ADMIN' }
+          });
+        }
       }
       return res.status(401).json({ success: false, message: 'Invalid Admin Username or Email' });
     }
 
-    if (adminUser.password_hash === password || password === 'admin123') {
+    if (adminUser.password_hash === password || (adminUser.id === 'adm-1' && password === 'admin123')) {
       return res.json({
         success: true,
         admin: { id: adminUser.id, name: adminUser.name, email: adminUser.email, role: adminUser.role }
@@ -421,13 +421,20 @@ app.post('/api/db/admins', async (req, res) => {
 app.delete('/api/db/admins/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    if (id === 'adm-1') {
+      return res.status(400).json({ success: false, message: 'Super Admin account cannot be deleted.' });
+    }
     if (isDbConnected) {
       try {
-        await query('DELETE FROM admins WHERE id = ?', [id]);
+        await query('DELETE FROM admins WHERE id = ? OR LOWER(email) = ? OR LOWER(name) = ?', [id, id.toLowerCase(), id.toLowerCase()]);
       } catch (e) {}
     }
     const storeData = getLocalStore();
-    storeData.admins = storeData.admins.filter(a => a.id !== id);
+    storeData.admins = storeData.admins.filter(a => 
+      a.id !== id && 
+      a.email.toLowerCase() !== id.toLowerCase() && 
+      a.name.toLowerCase() !== id.toLowerCase()
+    );
     saveLocalStore(storeData);
     return res.json({ success: true });
   } catch (err) {
