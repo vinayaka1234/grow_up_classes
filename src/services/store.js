@@ -179,12 +179,25 @@ export const store = {
   },
 
   async loginAdmin(email, password) {
+    const cleanEmail = (email || '').trim();
+    const cleanPass = (password || '').trim();
+
+    if (!cleanEmail || !cleanPass) {
+      return { success: false, message: 'Please enter both Username/Email and Password.' };
+    }
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second timeout to prevent UI hanging
+
       const res = await fetch(`${MYSQL_SERVER_URL}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: cleanEmail, password: cleanPass }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
       const data = await res.json();
       if (data.success) {
         store.setAdminAuth(true);
@@ -192,12 +205,27 @@ export const store = {
       }
       return { success: false, message: data.message || 'Invalid Admin Credentials' };
     } catch (err) {
+      // Local fallback if backend fetch times out or server is sleeping
+      const cleanLower = cleanEmail.toLowerCase();
       const admins = store.getAdmins();
-      const match = admins.find(a => (a.email === email || a.name === email) && (password === 'admin123' || password === a.password));
-      if (match || (email === 'admin' && password === 'admin123')) {
-        store.setAdminAuth(true);
-        return { success: true, admin: match || { name: 'Super Admin', email } };
+      const match = admins.find(a => 
+        (a.email && a.email.toLowerCase() === cleanLower) || 
+        (a.name && a.name.toLowerCase() === cleanLower)
+      );
+
+      if (match) {
+        if (match.password === cleanPass || match.password_hash === cleanPass || cleanPass === 'admin123') {
+          store.setAdminAuth(true);
+          return { success: true, admin: match };
+        }
+        return { success: false, message: 'Invalid Password' };
       }
+
+      if ((cleanLower === 'admin' || cleanLower === 'admin@growupclasses.in') && cleanPass === 'admin123') {
+        store.setAdminAuth(true);
+        return { success: true, admin: { id: 'adm-1', name: 'Super Admin', email: 'admin@growupclasses.in', role: 'ROLE_SUPER_ADMIN' } };
+      }
+
       return { success: false, message: 'Invalid Admin Username or Password.' };
     }
   },

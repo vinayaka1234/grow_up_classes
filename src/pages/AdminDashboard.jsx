@@ -12,6 +12,7 @@ export default function AdminDashboard({ onClose }) {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'enquiries' | 'branches' | 'courses' | 'teachers' | 'admins'
 
@@ -57,13 +58,24 @@ export default function AdminDashboard({ onClose }) {
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
+    if (!adminUsername.trim() || !adminPassword.trim()) {
+      setLoginError('Please enter both Admin Username/Email and Password.');
+      return;
+    }
     setLoginError('');
-    const res = await store.loginAdmin(adminUsername, adminPassword);
-    if (res.success) {
-      setIsAdminLoggedIn(true);
-      loadAllData();
-    } else {
-      setLoginError(res.message || 'Invalid username or password.');
+    setIsLoggingIn(true);
+    try {
+      const res = await store.loginAdmin(adminUsername, adminPassword);
+      if (res.success) {
+        setIsAdminLoggedIn(true);
+        loadAllData();
+      } else {
+        setLoginError(res.message || 'Invalid username or password.');
+      }
+    } catch (err) {
+      setLoginError('An error occurred during sign in. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -283,10 +295,29 @@ export default function AdminDashboard({ onClose }) {
 
             <button
               type="submit"
+              disabled={isLoggingIn}
               className="btn-primary"
-              style={{ width: '100%', padding: '0.9rem', fontSize: '1rem', borderRadius: '12px' }}
+              style={{
+                width: '100%',
+                padding: '0.9rem',
+                fontSize: '1rem',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                opacity: isLoggingIn ? 0.7 : 1,
+                cursor: isLoggingIn ? 'not-allowed' : 'pointer'
+              }}
             >
-              Sign In to Admin Dashboard
+              {isLoggingIn ? (
+                <>
+                  <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                  Signing In...
+                </>
+              ) : (
+                'Sign In to Admin Dashboard'
+              )}
             </button>
           </form>
 
