@@ -6,10 +6,29 @@ export default function Navbar({ activeSection, onNavigate, onOpenEnquiry, onOpe
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [customerSession, setCustomerSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [newEnquiriesCount, setNewEnquiriesCount] = useState(0);
+
+  const updateCount = () => {
+    try {
+      const enquiries = store.getEnquiries();
+      const count = enquiries.filter(e => e.status === 'NEW').length;
+      setNewEnquiriesCount(count);
+    } catch (e) {
+      setNewEnquiriesCount(0);
+    }
+  };
 
   useEffect(() => {
     setCustomerSession(store.getCustomerSession());
     setIsAdmin(store.isAdminLoggedIn());
+    updateCount();
+
+    // Poll every 2 seconds to update new enquiry count automatically
+    const interval = setInterval(() => {
+      updateCount();
+    }, 2000);
+
+    return () => clearInterval(interval);
   }, [activeSection]);
 
   const navLinks = [
@@ -120,7 +139,7 @@ export default function Navbar({ activeSection, onNavigate, onOpenEnquiry, onOpe
             </div>
           )}
 
-          {/* Admin Panel Toggle Button */}
+          {/* Admin Panel Toggle Button with New Applications Indicator Badge */}
           <button
             onClick={onOpenAdmin}
             style={{
@@ -134,12 +153,36 @@ export default function Navbar({ activeSection, onNavigate, onOpenEnquiry, onOpe
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem'
+              gap: '0.35rem',
+              position: 'relative'
             }}
             title="Access Admin Management System"
           >
             {isAdmin ? <LayoutDashboard size={15} /> : <Lock size={15} />}
             <span className="hide-mobile">{isAdmin ? 'Admin Dashboard' : 'Admin Login'}</span>
+
+            {/* Red Notification Badge showing number of NEW Enquiries */}
+            {newEnquiriesCount > 0 && (
+              <span
+                style={{
+                  background: '#EF4444',
+                  color: '#FFFFFF',
+                  fontSize: '0.72rem',
+                  fontWeight: '800',
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: '9999px',
+                  boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: '1',
+                  minWidth: '18px'
+                }}
+                title={`${newEnquiriesCount} New Applications / Enquiries Recieved`}
+              >
+                {newEnquiriesCount}
+              </span>
+            )}
           </button>
 
           {/* Enquire CTA Button */}
@@ -204,6 +247,38 @@ export default function Navbar({ activeSection, onNavigate, onOpenEnquiry, onOpe
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <button
+              onClick={() => { setMobileMenuOpen(false); onOpenAdmin(); }}
+              style={{
+                width: '100%',
+                padding: '0.8rem',
+                background: '#F1F5F9',
+                border: '1px solid #CBD5E1',
+                borderRadius: '12px',
+                fontSize: '0.9rem',
+                fontWeight: '700',
+                color: '#334155',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Lock size={16} /> Admin Login
+              {newEnquiriesCount > 0 && (
+                <span style={{
+                  background: '#EF4444',
+                  color: '#FFFFFF',
+                  fontSize: '0.75rem',
+                  fontWeight: '800',
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '9999px'
+                }}>
+                  {newEnquiriesCount} New
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => { setMobileMenuOpen(false); onOpenEnquiry(); }}
               className="btn-primary"
