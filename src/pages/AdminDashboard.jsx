@@ -67,9 +67,12 @@ export default function AdminDashboard({ onClose }) {
     }
   };
 
-  const handleAdminLogout = () => {
+  const handleExitAdmin = () => {
     store.setAdminAuth(false);
     setIsAdminLoggedIn(false);
+    setAdminUsername('');
+    setAdminPassword('');
+    if (onClose) onClose();
   };
 
   // Status Change Handlers
@@ -289,7 +292,7 @@ export default function AdminDashboard({ onClose }) {
 
           <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
             <button
-              onClick={onClose}
+              onClick={handleExitAdmin}
               style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '0.875rem', cursor: 'pointer', fontWeight: '600' }}
             >
               ← Back to Main Website
@@ -323,13 +326,13 @@ export default function AdminDashboard({ onClose }) {
             <RefreshCw size={14} /> Refresh Data
           </button>
           <button
-            onClick={onClose}
+            onClick={handleExitAdmin}
             style={{ background: '#334155', color: '#FFFFFF', border: 'none', padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}
           >
             Exit Admin View
           </button>
           <button
-            onClick={handleAdminLogout}
+            onClick={handleExitAdmin}
             style={{ background: '#EF4444', color: '#FFFFFF', border: 'none', padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
             <LogOut size={14} /> Logout
