@@ -107,11 +107,16 @@ async function initializeDatabase() {
         email VARCHAR(100),
         map_link TEXT,
         timings VARCHAR(150),
+        facilities TEXT,
         image_url TEXT,
         status VARCHAR(20) DEFAULT 'ACTIVE',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    try {
+      await pool.execute('ALTER TABLE branches ADD COLUMN facilities TEXT');
+    } catch (e) {}
 
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS courses (
@@ -399,14 +404,18 @@ app.get('/api/db/branches', async (req, res) => {
 
 app.post('/api/db/branches', async (req, res) => {
   try {
-    const { id, name, area, address, phone, email, map_link, timings, image_url } = req.body;
+    const { id, name, area, address, phone, email, map_link, mapLink, timings, facilities, image_url, image } = req.body;
     const branchId = id || ('br-' + Date.now().toString().slice(-4));
+    const mapVal = map_link || mapLink || '';
+    const imgVal = image_url || image || '';
+    const facStr = Array.isArray(facilities) ? JSON.stringify(facilities) : (facilities || '');
+
     const sql = `
-      INSERT INTO branches (id, name, area, address, phone, email, map_link, timings, image_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE name=VALUES(name), area=VALUES(area), address=VALUES(address), phone=VALUES(phone), email=VALUES(email), map_link=VALUES(map_link), timings=VALUES(timings), image_url=VALUES(image_url)
+      INSERT INTO branches (id, name, area, address, phone, email, map_link, timings, facilities, image_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE name=VALUES(name), area=VALUES(area), address=VALUES(address), phone=VALUES(phone), email=VALUES(email), map_link=VALUES(map_link), timings=VALUES(timings), facilities=VALUES(facilities), image_url=VALUES(image_url)
     `;
-    await query(sql, [branchId, name, area, address, phone, email || '', map_link || '', timings || '', image_url || '']);
+    await query(sql, [branchId, name, area, address, phone, email || '', mapVal, timings || '', facStr, imgVal]);
     return res.json({ success: true, id: branchId });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
