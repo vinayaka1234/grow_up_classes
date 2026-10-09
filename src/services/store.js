@@ -83,6 +83,13 @@ export const store = {
           setItem(KEYS.ENQUIRIES, mapped);
         }
       }
+
+      // Fetch Admins
+      const resAdm = await fetch(`${MYSQL_SERVER_URL}/admins`);
+      const dataAdm = await resAdm.json();
+      if (dataAdm.success && dataAdm.data) {
+        setItem('guc_admins_list_v1', dataAdm.data);
+      }
     } catch (e) {
       console.log('[MySQL Note]: Database server connection skipped or using cached data.');
     }
@@ -157,12 +164,79 @@ export const store = {
     return session;
   },
 
-  // Admin Auth Session
+  // Admin Auth Session & Credentials Management
   isAdminLoggedIn() {
     return getItem(KEYS.ADMIN_AUTH, false);
   },
   setAdminAuth(status) {
     setItem(KEYS.ADMIN_AUTH, status);
+  },
+
+  getAdmins() {
+    return getItem('guc_admins_list_v1', [
+      { id: 'adm-1', name: 'Super Admin', email: 'admin@growupclasses.in', role: 'ROLE_SUPER_ADMIN' }
+    ]);
+  },
+
+  async loginAdmin(email, password) {
+    try {
+      const res = await fetch(`${MYSQL_SERVER_URL}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        store.setAdminAuth(true);
+        return { success: true, admin: data.admin };
+      }
+      return { success: false, message: data.message || 'Invalid Admin Credentials' };
+    } catch (err) {
+      const admins = store.getAdmins();
+      const match = admins.find(a => (a.email === email || a.name === email) && (password === 'admin123' || password === a.password));
+      if (match || (email === 'admin' && password === 'admin123')) {
+        store.setAdminAuth(true);
+        return { success: true, admin: match || { name: 'Super Admin', email } };
+      }
+      return { success: false, message: 'Invalid Admin Username or Password.' };
+    }
+  },
+
+  async saveAdmin(adminData) {
+    const admins = store.getAdmins();
+    const formatted = {
+      id: adminData.id || ('adm-' + Date.now().toString().slice(-4)),
+      name: adminData.name,
+      email: adminData.email,
+      password: adminData.password || 'admin123',
+      role: adminData.role || 'ROLE_ADMIN'
+    };
+    let updated;
+    if (adminData.id) {
+      updated = admins.map(a => a.id === adminData.id ? { ...a, ...formatted } : a);
+    } else {
+      updated = [formatted, ...admins];
+    }
+    setItem('guc_admins_list_v1', updated);
+
+    try {
+      fetch(`${MYSQL_SERVER_URL}/admins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formatted)
+      }).catch(e => {});
+    } catch (e) {}
+
+    return updated;
+  },
+
+  async deleteAdmin(id) {
+    const admins = store.getAdmins().filter(a => a.id !== id);
+    setItem('guc_admins_list_v1', admins);
+    try {
+      fetch(`${MYSQL_SERVER_URL}/admins/${id}`, { method: 'DELETE' }).catch(e => {});
+    } catch (e) {}
+    return admins;
   },
 
   // Enquiries CRUD
@@ -268,22 +342,49 @@ export const store = {
   getBranches() { return getItem(KEYS.BRANCHES, initialBranches); },
   saveBranch(branch) {
     const branches = store.getBranches();
+    
+    let facilitiesArr = [];
+    if (Array.isArray(branch.facilities)) {
+      facilitiesArr = branch.facilities;
+    } else if (typeof branch.facilities === 'string' && branch.facilities) {
+      facilitiesArr = branch.facilities.split(',').map(f => f.trim());
+    } else {
+      facilitiesArr = ['Air-Conditioned Classrooms', 'Smart Boards', 'Library & Study Hall'];
+    }
+
+    const formatted = {
+      id: branch.id || ('br-' + Date.now().toString().slice(-4)),
+      name: branch.name,
+      area: branch.area,
+      address: branch.address,
+      phone: branch.phone,
+      email: branch.email || '',
+      timings: branch.timings || 'Mon - Sat: 7:00 AM - 8:30 PM',
+      map_link: branch.map_link || branch.mapLink || 'https://maps.google.com',
+      mapLink: branch.map_link || branch.mapLink || 'https://maps.google.com',
+      image_url: branch.image_url || branch.image || 'https://images.unsplash.com/photo-1562774053-701939374585',
+      image: branch.image_url || branch.image || 'https://images.unsplash.com/photo-1562774053-701939374585',
+      facilities: facilitiesArr,
+      status: branch.status || 'ACTIVE'
+    };
+
     let updated;
     if (branch.id) {
-      updated = branches.map(b => b.id === branch.id ? branch : b);
+      updated = branches.map(b => b.id === branch.id ? { ...b, ...formatted } : b);
     } else {
-      branch.id = 'br-' + Date.now().toString().slice(-4);
-      branch.status = 'ACTIVE';
-      updated = [branch, ...branches];
+      updated = [formatted, ...branches];
     }
     setItem(KEYS.BRANCHES, updated);
+
     try {
       fetch(`${MYSQL_SERVER_URL}/branches`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(branch)
+        body: JSON.stringify(formatted)
       }).catch(e => {});
     } catch (e) {}
+
+    return updated;
   },
   deleteBranch(id) {
     setItem(KEYS.BRANCHES, store.getBranches().filter(b => b.id !== id));

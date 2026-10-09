@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Building2, BookOpen, Award, Image as ImageIcon,
   CheckCircle2, Clock, Phone, Mail, Search, Filter, Plus, Trash2, Edit,
   LogOut, Lock, Download, MessageSquare, ChevronRight, X, AlertCircle, RefreshCw,
-  ExternalLink, MapPin
+  ExternalLink, MapPin, ShieldAlert, KeyRound, UserCheck
 } from 'lucide-react';
 
 export default function AdminDashboard({ onClose }) {
@@ -13,7 +13,7 @@ export default function AdminDashboard({ onClose }) {
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'enquiries' | 'branches' | 'courses' | 'teachers' | 'achievements' | 'gallery'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'enquiries' | 'branches' | 'courses' | 'teachers' | 'admins'
 
   // Data State
   const [enquiries, setEnquiries] = useState([]);
@@ -22,6 +22,7 @@ export default function AdminDashboard({ onClose }) {
   const [teachers, setTeachers] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [gallery, setGallery] = useState([]);
+  const [adminUsers, setAdminUsers] = useState([]);
 
   // Filters & Search for Enquiries
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,7 +34,7 @@ export default function AdminDashboard({ onClose }) {
   const [noteText, setNoteText] = useState('');
 
   // CMS Add Modals State
-  const [modalType, setModalType] = useState(null); // 'ADD_BRANCH' | 'EDIT_BRANCH' | 'ADD_COURSE' | 'ADD_TEACHER' | 'ADD_ACHIEVEMENT' | 'ADD_GALLERY'
+  const [modalType, setModalType] = useState(null); // 'ADD_BRANCH' | 'EDIT_BRANCH' | 'ADD_COURSE' | 'ADD_TEACHER' | 'ADD_ADMIN'
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
@@ -51,17 +52,18 @@ export default function AdminDashboard({ onClose }) {
     setTeachers(store.getTeachers());
     setAchievements(store.getAchievements());
     setGallery(store.getGallery());
+    setAdminUsers(store.getAdmins());
   };
 
-  const handleAdminLogin = (e) => {
+  const handleAdminLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
-    if (adminUsername === 'admin' && adminPassword === 'admin123') {
-      store.setAdminAuth(true);
+    const res = await store.loginAdmin(adminUsername, adminPassword);
+    if (res.success) {
       setIsAdminLoggedIn(true);
       loadAllData();
     } else {
-      setLoginError('Invalid username or password. (Use demo credentials: admin / admin123)');
+      setLoginError(res.message || 'Invalid username or password.');
     }
   };
 
@@ -147,9 +149,9 @@ export default function AdminDashboard({ onClose }) {
     setFormData({});
   };
 
-  const handleSaveCMSAchievement = (e) => {
+  const handleSaveCMSAdmin = async (e) => {
     e.preventDefault();
-    store.saveAchievement(formData);
+    await store.saveAdmin(formData);
     loadAllData();
     setModalType(null);
     setFormData({});
@@ -211,7 +213,7 @@ export default function AdminDashboard({ onClose }) {
               Admin Management Portal
             </h2>
             <p style={{ color: '#64748B', fontSize: '0.875rem', marginTop: '0.35rem' }}>
-              Log in to manage student leads, courses, and branch locations.
+              Sign in with your Admin email or username to access the dashboard.
             </p>
           </div>
 
@@ -236,11 +238,11 @@ export default function AdminDashboard({ onClose }) {
           <form onSubmit={handleAdminLogin}>
             <div style={{ marginBottom: '1.25rem' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#334155', marginBottom: '0.4rem' }}>
-                Username / Email
+                Admin Username / Email *
               </label>
               <input
                 type="text"
-                placeholder="admin"
+                placeholder="e.g. admin or admin@growupclasses.in"
                 value={adminUsername}
                 onChange={(e) => setAdminUsername(e.target.value)}
                 required
@@ -257,7 +259,7 @@ export default function AdminDashboard({ onClose }) {
 
             <div style={{ marginBottom: '1.75rem' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#334155', marginBottom: '0.4rem' }}>
-                Password
+                Password *
               </label>
               <input
                 type="password"
@@ -453,6 +455,30 @@ export default function AdminDashboard({ onClose }) {
               }}
             >
               <Users size={18} /> Faculty CMS
+            </button>
+
+            <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#94A3B8', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '1.5rem', marginBottom: '0.5rem', paddingLeft: '0.5rem' }}>
+              System & Security
+            </div>
+
+            <button
+              onClick={() => setActiveTab('admins')}
+              style={{
+                textAlign: 'left',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                border: 'none',
+                background: activeTab === 'admins' ? '#EFF6FF' : 'transparent',
+                color: activeTab === 'admins' ? '#2563EB' : '#475569',
+                fontWeight: activeTab === 'admins' ? '700' : '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                fontSize: '0.9rem'
+              }}
+            >
+              <KeyRound size={18} /> Admin Accounts
             </button>
           </nav>
         </aside>
@@ -709,7 +735,6 @@ export default function AdminDashboard({ onClose }) {
               <div className="grid-responsive-3">
                 {branches.map((b) => {
                   const img = b.image_url || b.image || 'https://images.unsplash.com/photo-1562774053-701939374585';
-                  const mapUrl = b.map_link || b.mapLink || 'https://maps.google.com';
                   let facs = [];
                   if (Array.isArray(b.facilities)) facs = b.facilities;
                   else if (typeof b.facilities === 'string' && b.facilities) facs = b.facilities.split(',').map(f => f.trim());
@@ -867,6 +892,98 @@ export default function AdminDashboard({ onClose }) {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: ADMIN USERS CMS */}
+          {activeTab === 'admins' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#0F172A' }}>Admin Accounts & Security</h1>
+                  <p style={{ color: '#64748B', fontSize: '0.9rem' }}>Create and manage administrator accounts stored in your MySQL Database.</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setModalType('ADD_ADMIN');
+                    setFormData({ name: '', email: '', password: 'admin123', role: 'ROLE_ADMIN' });
+                  }}
+                  className="btn-emerald"
+                  style={{ padding: '0.65rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  <Plus size={16} /> Add New Admin User
+                </button>
+              </div>
+
+              {/* Admin Accounts Table */}
+              <div style={{ background: '#FFFFFF', borderRadius: '20px', border: '1px solid #E2E8F0', overflow: 'hidden', marginBottom: '2rem' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC', color: '#475569', textAlign: 'left', borderBottom: '1px solid #E2E8F0' }}>
+                        <th style={{ padding: '0.85rem' }}>Admin Name</th>
+                        <th style={{ padding: '0.85rem' }}>Email / Login Username</th>
+                        <th style={{ padding: '0.85rem' }}>Role</th>
+                        <th style={{ padding: '0.85rem' }}>Status</th>
+                        <th style={{ padding: '0.85rem', textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminUsers.map((adm) => (
+                        <tr key={adm.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '0.85rem', fontWeight: '700', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <UserCheck size={18} color="#2563EB" /> {adm.name}
+                          </td>
+                          <td style={{ padding: '0.85rem', fontWeight: '700', color: '#059669' }}>
+                            {adm.email}
+                          </td>
+                          <td style={{ padding: '0.85rem' }}>
+                            <span style={{ background: '#EFF6FF', color: '#1E40AF', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '800' }}>
+                              {adm.role || 'ROLE_ADMIN'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.85rem' }}>
+                            <span style={{ background: '#ECFDF5', color: '#065F46', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '800' }}>
+                              ACTIVE
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.85rem', textAlign: 'right' }}>
+                            {adm.id !== 'adm-1' && (
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm(`Delete admin user "${adm.name}"?`)) {
+                                    await store.deleteAdmin(adm.id);
+                                    loadAllData();
+                                  }
+                                }}
+                                style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5', padding: '0.35rem 0.65rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer' }}
+                              >
+                                Delete Admin
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Direct SQL Helper Box */}
+              <div style={{ background: '#F8FAFC', padding: '1.5rem', borderRadius: '16px', border: '1px solid #CBD5E1' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0F172A', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <KeyRound size={16} color="#2563EB" /> Option to Add Admin Directly in MySQL Database
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '0.75rem' }}>
+                  You can also insert admin login credentials directly into your Aiven Cloud MySQL database via MySQL Workbench or Aiven Console:
+                </p>
+                <pre style={{ background: '#0F172A', color: '#F8FAFC', padding: '1rem', borderRadius: '10px', fontSize: '0.82rem', overflowX: 'auto' }}>
+{`USE defaultdb;
+
+INSERT INTO admins (id, name, email, password_hash, role) 
+VALUES ('adm-2', 'Rahul Admin', 'rahul@growupclasses.in', 'password123', 'ROLE_ADMIN');`}
+                </pre>
               </div>
             </div>
           )}
@@ -1104,6 +1221,44 @@ export default function AdminDashboard({ onClose }) {
                 <button type="submit" className="btn-emerald" style={{ flex: 1, padding: '0.75rem' }}>
                   Save Branch Location
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CMS ADD ADMIN MODAL */}
+      {modalType === 'ADD_ADMIN' && (
+        <div className="modal-overlay">
+          <div className="glass-card" style={{ maxWidth: '480px', width: '100%', background: '#FFFFFF', padding: '2rem', borderRadius: '24px' }}>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '0.5rem', color: '#0F172A' }}>Add New Admin User</h2>
+            <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '1.25rem' }}>
+              Create an administrator account stored directly in your MySQL database.
+            </p>
+            <form onSubmit={handleSaveCMSAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.25rem' }}>Admin Name *</label>
+                <input type="text" placeholder="e.g. Rahul Sharma" value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.25rem' }}>Email / Login Username *</label>
+                <input type="email" placeholder="e.g. rahul@growupclasses.in" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.25rem' }}>Login Password *</label>
+                <input type="password" placeholder="e.g. password123" value={formData.password || ''} onChange={(e) => setFormData({...formData, password: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.25rem' }}>Role</label>
+                <select value={formData.role || 'ROLE_ADMIN'} onChange={(e) => setFormData({...formData, role: e.target.value})} style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+                  <option value="ROLE_ADMIN">ROLE_ADMIN (Standard Admin)</option>
+                  <option value="ROLE_SUPER_ADMIN">ROLE_SUPER_ADMIN (Super Admin)</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button type="button" onClick={() => setModalType(null)} className="btn-secondary" style={{ flex: 1, padding: '0.7rem' }}>Cancel</button>
+                <button type="submit" className="btn-emerald" style={{ flex: 1, padding: '0.7rem' }}>Create Admin Account</button>
               </div>
             </form>
           </div>

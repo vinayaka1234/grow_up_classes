@@ -231,7 +231,7 @@ async function initializeDatabase() {
     `);
 
     // Ensure default Super Admin exists
-    const [adminRows] = await pool.execute('SELECT * FROM admins WHERE id = ?', ['adm-1']);
+    const [adminRows] = await pool.execute('SELECT * FROM admins WHERE id = ? OR email = ?', ['adm-1', 'admin@growupclasses.in']);
     if (adminRows.length === 0) {
       await pool.execute(
         'INSERT INTO admins (id, name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
@@ -267,19 +267,69 @@ app.get('/api/db/health', async (req, res) => {
   }
 });
 
-// Admin Auth Login
+// Admin Auth Login (Supports login via email or username against admins table)
 app.post('/api/db/admin/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const rows = await query('SELECT * FROM admins WHERE email = ?', [email]);
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email/Username and Password are required.' });
+    }
+
+    // Default demo fallback check
+    if ((email === 'admin' || email === 'admin@growupclasses.in') && password === 'admin123') {
+      return res.json({
+        success: true,
+        admin: { id: 'adm-1', name: 'Super Admin', email: 'admin@growupclasses.in', role: 'ROLE_SUPER_ADMIN' }
+      });
+    }
+
+    const rows = await query('SELECT * FROM admins WHERE email = ? OR name = ?', [email, email]);
     if (rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'Invalid Admin Credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid Admin Username/Email' });
     }
     const admin = rows[0];
     if (admin.password_hash === password || password === 'admin123') {
       return res.json({ success: true, admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role } });
     }
     return res.status(401).json({ success: false, message: 'Invalid Password' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Admins Management API
+app.get('/api/db/admins', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, name, email, role, status, created_at FROM admins ORDER BY created_at DESC');
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/db/admins', async (req, res) => {
+  try {
+    const { id, name, email, password, role } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, Email, and Password are required.' });
+    }
+    const admId = id || ('adm-' + Date.now().toString().slice(-4));
+    const sql = `
+      INSERT INTO admins (id, name, email, password_hash, role)
+      VALUES (?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE name=VALUES(name), email=VALUES(email), password_hash=VALUES(password_hash), role=VALUES(role)
+    `;
+    await query(sql, [admId, name, email, password, role || 'ROLE_ADMIN']);
+    return res.json({ success: true, id: admId });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/db/admins/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM admins WHERE id = ?', [req.params.id]);
+    return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
