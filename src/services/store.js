@@ -95,22 +95,29 @@ export const store = {
     }
   },
 
-  // Customer / Visitor Session (Uses sessionStorage so every new session/device starts fresh)
+  // Permanent Visitor Session (Persisted in localStorage so customer registers ONLY ONCE)
   getCustomerSession() {
     try {
-      const data = sessionStorage.getItem(KEYS.CUSTOMER_SESSION);
-      return data ? JSON.parse(data) : null;
+      const localData = localStorage.getItem(KEYS.CUSTOMER_SESSION);
+      if (localData) return JSON.parse(localData);
+
+      const sessionData = sessionStorage.getItem(KEYS.CUSTOMER_SESSION);
+      if (sessionData) return JSON.parse(sessionData);
+
+      return null;
     } catch (e) {
       return null;
     }
   },
   setCustomerSession(sessionData) {
     try {
+      localStorage.setItem(KEYS.CUSTOMER_SESSION, JSON.stringify(sessionData));
       sessionStorage.setItem(KEYS.CUSTOMER_SESSION, JSON.stringify(sessionData));
     } catch (e) {}
   },
   clearCustomerSession() {
     try {
+      localStorage.removeItem(KEYS.CUSTOMER_SESSION);
       sessionStorage.removeItem(KEYS.CUSTOMER_SESSION);
     } catch (e) {}
   },
