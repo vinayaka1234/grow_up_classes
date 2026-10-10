@@ -256,6 +256,47 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Admin Mobile Responsive Utilities */
+.admin-sidebar-desktop {
+  display: block;
+}
+
+.admin-nav-mobile {
+  display: none;
+}
+
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .admin-sidebar-desktop {
+    display: none !important;
+  }
+  .admin-nav-mobile {
+    display: flex !important;
+  }
+  .grid-responsive-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  .grid-responsive-3 {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  .modal-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-main-content {
+    padding: 1rem 0.75rem !important;
+  }
+  .admin-header-actions {
+    gap: 0.35rem !important;
+  }
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

@@ -257,7 +257,7 @@ export default function AdminDashboard({ onClose }) {
               </label>
               <input
                 type="text"
-                placeholder="e.g. admin or admin@growupclasses.in"
+                placeholder="Enter Admin Username or Email"
                 value={adminUsername}
                 onChange={(e) => setAdminUsername(e.target.value)}
                 required
@@ -278,7 +278,7 @@ export default function AdminDashboard({ onClose }) {
               </label>
               <input
                 type="password"
-                placeholder="admin123"
+                placeholder="Enter Password"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
                 required
@@ -338,44 +338,91 @@ export default function AdminDashboard({ onClose }) {
     <div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
       
       {/* Top Header */}
-      <header style={{ background: '#0F172A', color: '#FFFFFF', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1E293B' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: '#2563EB', padding: '0.5rem', borderRadius: '10px', display: 'flex' }}>
+      <header style={{ background: '#0F172A', color: '#FFFFFF', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1E293B', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ background: '#2563EB', padding: '0.45rem', borderRadius: '10px', display: 'flex' }}>
             <LayoutDashboard size={20} color="#FFFFFF" />
           </div>
           <div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: '#FFFFFF' }}>Grow Up Classes Admin</h2>
-            <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Live Control Panel & Database</span>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: '800', margin: 0, color: '#FFFFFF' }}>Grow Up Classes Admin</h2>
+            <span style={{ fontSize: '0.72rem', color: '#94A3B8', display: 'block' }}>Live Control Panel</span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="admin-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
             onClick={loadAllData}
-            style={{ background: '#1E293B', color: '#94A3B8', border: '1px solid #334155', padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            title="Refresh All Data"
+            style={{ background: '#1E293B', color: '#94A3B8', border: '1px solid #334155', padding: '0.45rem 0.75rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
-            <RefreshCw size={14} /> Refresh Data
+            <RefreshCw size={14} /> <span className="hide-mobile">Refresh Data</span>
           </button>
           <button
             onClick={handleExitAdmin}
-            style={{ background: '#334155', color: '#FFFFFF', border: 'none', padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}
+            style={{ background: '#EF4444', color: '#FFFFFF', border: 'none', padding: '0.45rem 0.75rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
-            Exit Admin View
-          </button>
-          <button
-            onClick={handleExitAdmin}
-            style={{ background: '#EF4444', color: '#FFFFFF', border: 'none', padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-          >
-            <LogOut size={14} /> Logout
+            <LogOut size={14} /> Exit Admin
           </button>
         </div>
       </header>
 
+      {/* Mobile Horizontal Navigation Tabs (Visible on screens <= 768px) */}
+      <div className="admin-nav-mobile" style={{
+        background: '#FFFFFF',
+        borderBottom: '1px solid #E2E8F0',
+        padding: '0.5rem 0.75rem',
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        display: 'flex',
+        gap: '0.5rem',
+        width: '100%'
+      }}>
+        {[
+          { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+          { id: 'enquiries', label: 'Enquiries', icon: Users, badge: newLeads },
+          { id: 'branches', label: 'Branches', icon: Building2 },
+          { id: 'courses', label: 'Courses', icon: BookOpen },
+          { id: 'teachers', label: 'Faculty', icon: Users },
+          { id: 'admins', label: 'Admins', icon: KeyRound }
+        ].map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '0.5rem 0.85rem',
+                borderRadius: '10px',
+                border: isActive ? '1px solid #2563EB' : '1px solid #E2E8F0',
+                background: isActive ? '#EFF6FF' : '#FFFFFF',
+                color: isActive ? '#2563EB' : '#475569',
+                fontWeight: isActive ? '700' : '600',
+                fontSize: '0.8rem',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+            >
+              <Icon size={15} />
+              <span>{tab.label}</span>
+              {tab.badge > 0 && (
+                <span style={{ background: '#EF4444', color: '#FFFFFF', fontSize: '0.65rem', fontWeight: '800', padding: '0.1rem 0.35rem', borderRadius: '9999px' }}>
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Main Content Area */}
-      <div style={{ display: 'flex', flex: 1 }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         
-        {/* Sidebar Navigation */}
-        <aside style={{ width: '250px', background: '#FFFFFF', borderRight: '1px solid #E2E8F0', padding: '1.5rem 1rem' }}>
+        {/* Desktop Sidebar Navigation */}
+        <aside className="admin-sidebar-desktop" style={{ width: '250px', background: '#FFFFFF', borderRight: '1px solid #E2E8F0', padding: '1.5rem 1rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#94A3B8', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1rem', paddingLeft: '0.5rem' }}>
             Main Menu
           </div>
@@ -518,7 +565,7 @@ export default function AdminDashboard({ onClose }) {
         </aside>
 
         {/* Tab Views */}
-        <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+        <main className="admin-main-content" style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
           
           {/* TAB 1: OVERVIEW DASHBOARD */}
           {activeTab === 'dashboard' && (
@@ -941,7 +988,7 @@ export default function AdminDashboard({ onClose }) {
                 <button
                   onClick={() => {
                     setModalType('ADD_ADMIN');
-                    setFormData({ name: '', email: '', password: 'admin123', role: 'ROLE_ADMIN' });
+                    setFormData({ name: '', email: '', password: '', role: 'ROLE_ADMIN' });
                   }}
                   className="btn-emerald"
                   style={{ padding: '0.65rem 1.25rem', fontSize: '0.85rem' }}
@@ -1272,15 +1319,15 @@ VALUES ('adm-2', 'Rahul Admin', 'rahul@growupclasses.in', 'password123', 'ROLE_A
             <form onSubmit={handleSaveCMSAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.25rem' }}>Admin Name *</label>
-                <input type="text" placeholder="e.g. Rahul Sharma" value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
+                <input type="text" placeholder="Enter Admin Full Name" value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.25rem' }}>Email / Login Username *</label>
-                <input type="email" placeholder="e.g. rahul@growupclasses.in" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
+                <input type="email" placeholder="Enter Email or Username" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.25rem' }}>Login Password *</label>
-                <input type="password" placeholder="e.g. password123" value={formData.password || ''} onChange={(e) => setFormData({...formData, password: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
+                <input type="password" placeholder="Enter Password" value={formData.password || ''} onChange={(e) => setFormData({...formData, password: e.target.value})} required style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#334155', marginBottom: '0.25rem' }}>Role</label>

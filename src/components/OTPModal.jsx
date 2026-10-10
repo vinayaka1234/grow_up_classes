@@ -158,7 +158,7 @@ export default function OTPModal({ isOpen, onClose, onVerified, isMandatory }) {
               <User size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
               <input
                 type="text"
-                placeholder="e.g. Rahul Sharma"
+                placeholder="Enter your Full Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 style={{
@@ -188,7 +188,7 @@ export default function OTPModal({ isOpen, onClose, onVerified, isMandatory }) {
               <input
                 type="tel"
                 maxLength={10}
-                placeholder="98450 12345"
+                placeholder="Enter 10-digit Mobile Number"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
                 style={{
